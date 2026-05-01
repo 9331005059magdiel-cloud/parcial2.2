@@ -27,8 +27,7 @@
             android:layout_height="wrap_content"
             app:cardCornerRadius="16dp"
             app:cardElevation="2dp"
-            android:layout_marginBottom="16dp"
-            app:strokeWidth="0dp">
+            android:layout_marginBottom="16dp">
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -37,7 +36,7 @@
                     android:id="@+id/youtube_player_1"
                     android:layout_width="match_parent"
                     android:layout_height="210dp"
-                    app:handleNetworkEvents="true" />
+                    app:enableAutomaticInitialization="false" />
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -54,8 +53,7 @@
             android:layout_height="wrap_content"
             app:cardCornerRadius="16dp"
             app:cardElevation="2dp"
-            android:layout_marginBottom="16dp"
-            app:strokeWidth="0dp">
+            android:layout_marginBottom="16dp">
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -63,7 +61,8 @@
                 <com.pierfrancescosoffritti.androidyoutubeplayer.core.player.views.YouTubePlayerView
                     android:id="@+id/youtube_player_2"
                     android:layout_width="match_parent"
-                    android:layout_height="210dp" />
+                    android:layout_height="210dp"
+                    app:enableAutomaticInitialization="false" />
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -80,8 +79,7 @@
             android:layout_height="wrap_content"
             app:cardCornerRadius="16dp"
             app:cardElevation="2dp"
-            android:layout_marginBottom="16dp"
-            app:strokeWidth="0dp">
+            android:layout_marginBottom="16dp">
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -89,7 +87,8 @@
                 <com.pierfrancescosoffritti.androidyoutubeplayer.core.player.views.YouTubePlayerView
                     android:id="@+id/youtube_player_3"
                     android:layout_width="match_parent"
-                    android:layout_height="210dp" />
+                    android:layout_height="210dp"
+                    app:enableAutomaticInitialization="false" />
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -106,8 +105,7 @@
             android:layout_height="wrap_content"
             app:cardCornerRadius="16dp"
             app:cardElevation="2dp"
-            android:layout_marginBottom="24dp"
-            app:strokeWidth="0dp">
+            android:layout_marginBottom="24dp">
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -115,7 +113,8 @@
                 <com.pierfrancescosoffritti.androidyoutubeplayer.core.player.views.YouTubePlayerView
                     android:id="@+id/youtube_player_4"
                     android:layout_width="match_parent"
-                    android:layout_height="210dp" />
+                    android:layout_height="210dp"
+                    app:enableAutomaticInitialization="false" />
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

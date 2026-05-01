@@ -10,78 +10,102 @@ import androidx.fragment.app.activityViewModels
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.YouTubePlayer
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.listeners.AbstractYouTubePlayerListener
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.views.YouTubePlayerView
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.options.IFramePlayerOptions
 
 class SoyUnFragmentoFragment : Fragment() {
 
-    private val TAG = "SoyUnFragmentoFragment"
+    private val TAG = "YouTubeDebug"
     private val viewModel: VideosViewModel by activityViewModels()
-
-    private var player1: YouTubePlayer? = null
-    private var player2: YouTubePlayer? = null
-    private var player3: YouTubePlayer? = null
-    private var player4: YouTubePlayer? = null
-
-    private var playersInitialized = false
+    private var isInitialized = false
 
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_soy_un_fragmento, container, false)
-    }
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
+    ): View? = inflater.inflate(R.layout.fragment_soy_un_fragmento, container, false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val ytView1 = view.findViewById<YouTubePlayerView>(R.id.youtube_player_1)
-        val ytView2 = view.findViewById<YouTubePlayerView>(R.id.youtube_player_2)
-        val ytView3 = view.findViewById<YouTubePlayerView>(R.id.youtube_player_3)
-        val ytView4 = view.findViewById<YouTubePlayerView>(R.id.youtube_player_4)
+        val ytViews = listOf<YouTubePlayerView>(
+            view.findViewById(R.id.youtube_player_1),
+            view.findViewById(R.id.youtube_player_2),
+            view.findViewById(R.id.youtube_player_3),
+            view.findViewById(R.id.youtube_player_4)
+        )
 
-        viewLifecycleOwner.lifecycle.addObserver(ytView1)
-        viewLifecycleOwner.lifecycle.addObserver(ytView2)
-        viewLifecycleOwner.lifecycle.addObserver(ytView3)
-        viewLifecycleOwner.lifecycle.addObserver(ytView4)
+        // IMPORTANTE: NO agregamos el Observer aquí al inicio. 
+        // En el S24+, añadir el observer dispara una inicialización interna que puede
+        // chocar con nuestra carga secuencial y causar el error "Invalid video id".
 
-        viewModel.uiState.observe(viewLifecycleOwner) { uiState ->
-            if (playersInitialized) return@observe
-            playersInitialized = true
-
-            initPlayer(ytView1, uiState.videoId1) { player1 = it }
-            initPlayer(ytView2, uiState.videoId2) { player2 = it }
-            initPlayer(ytView3, uiState.videoId3) { player3 = it }
-            initPlayer(ytView4, uiState.videoId4) { player4 = it }
+        viewModel.uiState.observe(viewLifecycleOwner) { state ->
+            if (!isInitialized) {
+                isInitialized = true
+                // Delay inicial para que la vista esté completamente "asentada"
+                view.postDelayed({
+                    if (isAdded) {
+                        val ids = state.asList()
+                        Log.d(TAG, "Iniciando secuencia de carga blindada con IDs: $ids")
+                        startSequentialLoading(ytViews, ids, 0)
+                    }
+                }, 1000) 
+            }
         }
     }
 
-    private fun initPlayer(
-        playerView: YouTubePlayerView,
-        videoId: String,
-        onReady: (YouTubePlayer) -> Unit
-    ) {
-        playerView.addYouTubePlayerListener(object : AbstractYouTubePlayerListener() {
+    private fun startSequentialLoading(views: List<YouTubePlayerView>, ids: List<String>, index: Int) {
+        if (index >= views.size || !isAdded) {
+            Log.d(TAG, "Secuencia de carga finalizada.")
+            return
+        }
+
+        val playerView = views[index]
+        val videoId = if (index < ids.size) ids[index] else ""
+
+        if (videoId.length != 11) {
+            Log.e(TAG, "ID INVÁLIDO en índice $index: '$videoId'. Saltando...")
+            startSequentialLoading(views, ids, index + 1)
+            return
+        }
+
+        Log.d(TAG, "--- Inicializando Player ${index + 1} ---")
+
+        val iFrameOptions = IFramePlayerOptions.Builder()
+            .controls(1)
+            .build()
+
+        playerView.initialize(object : AbstractYouTubePlayerListener() {
             override fun onReady(youTubePlayer: YouTubePlayer) {
-                onReady(youTubePlayer)
-                youTubePlayer.cueVideo(videoId, 0f)
+                if (!isAdded) return
+                
+                Log.i(TAG, "✅ Player ${index + 1} listo. Cargando ID: $videoId")
+                
+                // Forzamos un pequeño retraso antes de enviar el comando de video 
+                // para que el motor JS de YouTube esté totalmente estable.
+                playerView.postDelayed({
+                    if (isAdded) {
+                        try {
+                            youTubePlayer.cueVideo(videoId, 0f)
+                            
+                            // Vinculamos el ciclo de vida SOLO después de que el video 
+                            // esté cargado para evitar errores de 'pauseVideo' prematuros.
+                            viewLifecycleOwner.lifecycle.addObserver(playerView)
+                            
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Error al ejecutar cueVideo ${index + 1}: ${e.message}")
+                        }
+                    }
+                }, 500)
+
+                // Esperamos 2 segundos antes de iniciar el siguiente para no saturar al S24+
+                playerView.postDelayed({
+                    if (isAdded) startSequentialLoading(views, ids, index + 1)
+                }, 2000)
             }
-        })
-    }
 
-    override fun onPause() {
-        super.onPause()
-        player1?.pause()
-        player2?.pause()
-        player3?.pause()
-        player4?.pause()
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        player1 = null
-        player2 = null
-        player3 = null
-        player4 = null
-        playersInitialized = false
+            override fun onError(youTubePlayer: YouTubePlayer, error: com.pierfrancescosoffritti.androidyoutubeplayer.core.player.PlayerConstants.PlayerError) {
+                Log.e(TAG, "❌ Error en Player ${index + 1}: $error")
+                // Intentamos con el siguiente a pesar del error
+                startSequentialLoading(views, ids, index + 1)
+            }
+        }, iFrameOptions)
     }
 }
