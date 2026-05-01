@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.AppPlantas" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">#6EE619</item>
+        <item name="colorPrimaryVariant">#4A8C0F</item>
+        <item name="colorOnPrimary">#182111</item>
+        <item name="colorSurface">#FFFFFF</item>
+        <item name="colorOnSurface">#182111</item>
+        <item name="android:windowBackground">#F7F8F6</item>
+    </style>
+</resources>
